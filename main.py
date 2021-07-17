@@ -25,14 +25,6 @@ def workbook_sorting_key(workbook_filename):
 sorted_workbooks = sorted(data_workbooks, key=workbook_sorting_key)
 
 # %%
-# for workbook_filename in sorted_workbooks[:1]:
-
-workbook_filename = '7 min dev copy.xlsx'
-workbook_filepath = os.path.join(raw_data_dir, workbook_filename)
-well_data = pd.read_excel(workbook_filepath, usecols='B:Y', skiprows=14, header=None, nrows=16)
-well_data = well_data.values
-
-# %%
 def get_single_timestep_tap_data(well_data):
     """
 
@@ -40,27 +32,35 @@ def get_single_timestep_tap_data(well_data):
     :return: np.ndarray: (320, ) array of normalized tap data.
     """
     background_data = well_data[:, :2]
-    background_average = np.nanmean(background_data)
+    background_mean = np.nanmean(background_data)
 
     control_data = well_data[:, -2:]
-    control_average = np.nanmean(control_data)
+    control_fluorescence = np.nanmean(control_data) - background_mean
 
-    compound_data = well_data[:, 2:-2]
+    raw_fluorescence = well_data[:, 2:-2]
+    background_corrected = raw_fluorescence - background_mean
+    normalised_fluorescence = background_corrected / control_fluorescence
 
-    normalised_compound_data = (compound_data - background_average) / control_average
-
-    tap1 = normalised_compound_data[::2, ::2].flatten()  # [TAP-1 A02, TAP-1 B0, TAP-1 C02...]
-    tap2 = normalised_compound_data[::2, 1::2].flatten()
-    tap3 = normalised_compound_data[1::2, ::2].flatten()
-    tap4 = normalised_compound_data[1::2, 1::2].flatten()
+    tap1 = normalised_fluorescence[::2, ::2].flatten(order='F')  # [TAP-1 A02, TAP-1 B0, TAP-1 C02...]
+    tap2 = normalised_fluorescence[::2, 1::2].flatten(order='F')
+    tap3 = normalised_fluorescence[1::2, ::2].flatten(order='F')
+    tap4 = normalised_fluorescence[1::2, 1::2].flatten(order='F')
 
     tap_timestep = np.hstack((tap1, tap2, tap3, tap4))
     return tap_timestep
+
 # %%
-number_of_quadrants = (well_data.shape[0] / 2) * (well_data.shape[1] / 2)
-number_of_quadrants = int(number_of_quadrants)
-well_data_reshaped = well_data.values.reshape((number_of_quadrants * 2, -1))
+NUM_COMPOUNDS = 320
+tap_data = np.zeros((NUM_COMPOUNDS, num_timesteps))
+for timestep, workbook_filename in enumerate(sorted_workbooks):
+# workbook_filename = '7 min dev copy.xlsx'
+    workbook_filepath = os.path.join(raw_data_dir, workbook_filename)
+    well_data = pd.read_excel(workbook_filepath, usecols='B:Y', skiprows=14, header=None, nrows=16)
+    well_data = well_data.values
+
+    tap_data[:, timestep] = get_single_timestep_tap_data(well_data)
+
+
 
 # %%
 
-tap_data[:, 0] = tap_timestep
