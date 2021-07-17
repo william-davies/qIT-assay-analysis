@@ -36,8 +36,8 @@ well_data = well_data.values
 def get_single_timestep_tap_data(well_data):
     """
 
-    :param well_data: np.ndarray
-    :return:
+    :param well_data: np.ndarray: (16, 24) array of all well plate readings at a particular timestep.
+    :return: np.ndarray: (320, ) array of normalized tap data.
     """
     background_data = well_data[:, :2]
     background_average = np.nanmean(background_data)
@@ -49,7 +49,7 @@ def get_single_timestep_tap_data(well_data):
 
     normalised_compound_data = (compound_data - background_average) / control_average
 
-    tap1 = normalised_compound_data[::2, ::2].flatten()
+    tap1 = normalised_compound_data[::2, ::2].flatten()  # [TAP-1 A02, TAP-1 B0, TAP-1 C02...]
     tap2 = normalised_compound_data[::2, 1::2].flatten()
     tap3 = normalised_compound_data[1::2, ::2].flatten()
     tap4 = normalised_compound_data[1::2, 1::2].flatten()
