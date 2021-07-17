@@ -3,7 +3,10 @@ import os
 import re
 import pandas as pd
 import numpy as np
+from constants import COMPOUND_NAMES
+
 # %%
+
 raw_data_dir = '/Users/joymyleejoy/Desktop/masters/Summer Project/Lab/Week 5/qIT results/Raw Data'
 
 dir_contents = os.listdir(raw_data_dir)
@@ -13,16 +16,16 @@ data_workbooks = list(filter(data_workbook_pattern.match, dir_contents))
 num_timesteps = len(data_workbooks)
 
 # %%
-def workbook_sorting_key(workbook_filename):
+def timedelta(workbook_filename):
     """
-    Sort chronologically.
+    Timestep of well readings.
     :param workbook_filename:
     :return:
     """
     timestamp = data_workbook_pattern.match(workbook_filename).group(1)
     return int(timestamp)
 
-sorted_workbooks = sorted(data_workbooks, key=workbook_sorting_key)
+sorted_workbooks = sorted(data_workbooks, key=timedelta)
 
 # %%
 def get_single_timestep_tap_data(well_data):
@@ -61,12 +64,11 @@ for timestep, workbook_filename in enumerate(sorted_workbooks):
     tap_data[:, timestep] = get_single_timestep_tap_data(well_data)
 
 
+# %%
+timedeltas = list(map(timedelta, sorted_workbooks))
+timedelta_index = pd.TimedeltaIndex(data=timedeltas, unit='m')
 
 # %%
+tap_data = tap_data.T
 
-workbook = pd.read_excel('/Users/joymyleejoy/Desktop/masters/Summer Project/Lab/Week 5/qIT results/Normalised/With Outliers/7 min normalised.xlsx')
-compound_names = workbook.iloc[36:, 0].values
-
-with open("compound_names.txt", "w") as f:
-    for compound_name in compound_names:
-        f.write(compound_name +"\n")
+tap_data_df = pd.DataFrame(data=tap_data, index=timedelta_index, columns=COMPOUND_NAMES)
