@@ -64,3 +64,9 @@ for timestep, workbook_filename in enumerate(sorted_workbooks):
 
 # %%
 
+workbook = pd.read_excel('/Users/joymyleejoy/Desktop/masters/Summer Project/Lab/Week 5/qIT results/Normalised/With Outliers/7 min normalised.xlsx')
+compound_names = workbook.iloc[36:, 0].values
+
+with open("compound_names.txt", "w") as f:
+    for compound_name in compound_names:
+        f.write(compound_name +"\n")
