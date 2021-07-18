@@ -76,25 +76,3 @@ tap_data = tap_data.T
 
 tap_data_df = pd.DataFrame(data=tap_data, index=timedelta_index, columns=COMPOUND_NAMES)
 
-# %%
-def single_phase_decay(x, Y0, K, plateau):
-    """
-
-    :param x: time (minutes)
-    :param Y0:
-    :param K: rate constant
-    :param plateau:
-    :return:
-    """
-    return (Y0 - plateau) * np.exp(-K * x) + plateau
-p0 = (1.09275377, 0.26676313, 0.00147156516)
-popt, pcov = curve_fit(single_phase_decay, timedeltas, tap_data_df.iloc[:, 1], p0=p0, maxfev=5000)
-
-plt.figure()
-plt.plot(timedeltas, tap_data_df.iloc[:, 0], '.', label='data')
-plt.plot(timedeltas, single_phase_decay(tap_data_df.iloc[:, 0], *popt), 'r-',
-         label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
-plt.xlabel('t (minutes)')
-plt.ylabel('Fluorescence')
-plt.legend()
-plt.show()
