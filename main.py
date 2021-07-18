@@ -3,18 +3,13 @@ import os
 import re
 import pandas as pd
 import numpy as np
-from constants import COMPOUND_NAMES
-from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
-
+from constants import COMPOUND_NAMES, NUM_COMPOUNDS
 
 # %%
 
-raw_data_dir = (
-    "/Users/joymyleejoy/Desktop/masters/Summer Project/Lab/Week 5/qIT results/Raw Data"
-)
+data_dir = "/Users/williamdavies/OneDrive - University College London/Documents/qITAssayAnalysis"
 
-dir_contents = os.listdir(raw_data_dir)
+dir_contents = os.listdir(data_dir)
 
 data_workbook_pattern = re.compile("^(\d+) min\.xlsx$")
 data_workbooks = list(filter(data_workbook_pattern.match, dir_contents))
@@ -36,7 +31,7 @@ sorted_workbooks = sorted(data_workbooks, key=timedelta)
 # %%
 def get_single_timestep_tap_data(well_data):
     """
-
+    Normalize fluorescence readings of a single timestep.
     :param well_data: np.ndarray: (16, 24) array of all well plate readings at a particular timestep.
     :return: np.ndarray: (320, ) array of normalized tap data.
     """
@@ -52,7 +47,7 @@ def get_single_timestep_tap_data(well_data):
 
     tap1 = normalised_fluorescence[::2, ::2].flatten(
         order="F"
-    )  # [TAP-1 A02, TAP-1 B0, TAP-1 C02...]
+    )  # [TAP-1 A02, TAP-1 B02, TAP-1 C02...]
     tap2 = normalised_fluorescence[::2, 1::2].flatten(order="F")
     tap3 = normalised_fluorescence[1::2, ::2].flatten(order="F")
     tap4 = normalised_fluorescence[1::2, 1::2].flatten(order="F")
@@ -62,11 +57,9 @@ def get_single_timestep_tap_data(well_data):
 
 
 # %%
-NUM_COMPOUNDS = 320
 tap_data = np.zeros((NUM_COMPOUNDS, num_timesteps))
 for timestep, workbook_filename in enumerate(sorted_workbooks):
-    # workbook_filename = '7 min dev copy.xlsx'
-    workbook_filepath = os.path.join(raw_data_dir, workbook_filename)
+    workbook_filepath = os.path.join(data_dir, workbook_filename)
     well_data = pd.read_excel(
         workbook_filepath, usecols="B:Y", skiprows=14, header=None, nrows=16
     )
@@ -83,3 +76,6 @@ timedelta_index = pd.TimedeltaIndex(data=timedeltas, unit="m")
 tap_data = tap_data.T
 
 tap_data_df = pd.DataFrame(data=tap_data, index=timedelta_index, columns=COMPOUND_NAMES)
+
+# %%
+tap_data_df.to_csv("ready-for-prism.csv", index_label="time")
