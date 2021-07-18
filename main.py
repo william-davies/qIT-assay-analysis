@@ -10,11 +10,13 @@ import matplotlib.pyplot as plt
 
 # %%
 
-raw_data_dir = '/Users/joymyleejoy/Desktop/masters/Summer Project/Lab/Week 5/qIT results/Raw Data'
+raw_data_dir = (
+    "/Users/joymyleejoy/Desktop/masters/Summer Project/Lab/Week 5/qIT results/Raw Data"
+)
 
 dir_contents = os.listdir(raw_data_dir)
 
-data_workbook_pattern = re.compile('^(\d+) min\.xlsx$')
+data_workbook_pattern = re.compile("^(\d+) min\.xlsx$")
 data_workbooks = list(filter(data_workbook_pattern.match, dir_contents))
 num_timesteps = len(data_workbooks)
 
@@ -27,6 +29,7 @@ def timedelta(workbook_filename):
     """
     timestamp = data_workbook_pattern.match(workbook_filename).group(1)
     return int(timestamp)
+
 
 sorted_workbooks = sorted(data_workbooks, key=timedelta)
 
@@ -47,21 +50,26 @@ def get_single_timestep_tap_data(well_data):
     background_corrected = raw_fluorescence - background_mean
     normalised_fluorescence = background_corrected / control_fluorescence
 
-    tap1 = normalised_fluorescence[::2, ::2].flatten(order='F')  # [TAP-1 A02, TAP-1 B0, TAP-1 C02...]
-    tap2 = normalised_fluorescence[::2, 1::2].flatten(order='F')
-    tap3 = normalised_fluorescence[1::2, ::2].flatten(order='F')
-    tap4 = normalised_fluorescence[1::2, 1::2].flatten(order='F')
+    tap1 = normalised_fluorescence[::2, ::2].flatten(
+        order="F"
+    )  # [TAP-1 A02, TAP-1 B0, TAP-1 C02...]
+    tap2 = normalised_fluorescence[::2, 1::2].flatten(order="F")
+    tap3 = normalised_fluorescence[1::2, ::2].flatten(order="F")
+    tap4 = normalised_fluorescence[1::2, 1::2].flatten(order="F")
 
     tap_timestep = np.hstack((tap1, tap2, tap3, tap4))
     return tap_timestep
+
 
 # %%
 NUM_COMPOUNDS = 320
 tap_data = np.zeros((NUM_COMPOUNDS, num_timesteps))
 for timestep, workbook_filename in enumerate(sorted_workbooks):
-# workbook_filename = '7 min dev copy.xlsx'
+    # workbook_filename = '7 min dev copy.xlsx'
     workbook_filepath = os.path.join(raw_data_dir, workbook_filename)
-    well_data = pd.read_excel(workbook_filepath, usecols='B:Y', skiprows=14, header=None, nrows=16)
+    well_data = pd.read_excel(
+        workbook_filepath, usecols="B:Y", skiprows=14, header=None, nrows=16
+    )
     well_data = well_data.values
 
     tap_data[:, timestep] = get_single_timestep_tap_data(well_data)
@@ -69,10 +77,9 @@ for timestep, workbook_filename in enumerate(sorted_workbooks):
 
 # %%
 timedeltas = list(map(timedelta, sorted_workbooks))
-timedelta_index = pd.TimedeltaIndex(data=timedeltas, unit='m')
+timedelta_index = pd.TimedeltaIndex(data=timedeltas, unit="m")
 
 # %%
 tap_data = tap_data.T
 
 tap_data_df = pd.DataFrame(data=tap_data, index=timedelta_index, columns=COMPOUND_NAMES)
-
